@@ -8,6 +8,9 @@ on:
       - 'AgonApp_Build.zip'
       - '.github/workflows/build.yml'
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -21,6 +24,9 @@ jobs:
 
       - uses: android-actions/setup-android@v3
 
+      - name: Install Android SDK
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
       - uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.11.1'
@@ -29,12 +35,10 @@ jobs:
         run: unzip -o AgonApp_Build.zip -d extracted
 
       - name: Build APK
-        run: |
-          gradle -p extracted/AgonApp wrapper --gradle-version 8.11.1
-          chmod +x extracted/AgonApp/gradlew
-          extracted/AgonApp/gradlew -p extracted/AgonApp assembleDebug
+        run: gradle -p extracted/AgonApp --no-daemon :app:assembleDebug
 
       - uses: actions/upload-artifact@v4
         with:
           name: AgonApp-APK
           path: extracted/AgonApp/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
